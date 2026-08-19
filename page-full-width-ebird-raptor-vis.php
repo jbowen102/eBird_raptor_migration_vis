@@ -1,9 +1,9 @@
 <?php
 /**
- * Template Name: Narrative Vis Project
- * Custom template saved off coral-dark/page-full-width.php 2026-07-12.
+ * Template Name: eBird Raptor Migration Vis
  *
- * Created for use with D3 visualization project.
+ *
+ *
  *
  */
 
@@ -1551,34 +1551,27 @@ get_header(); ?>
                     </br>
                     <hr style="border: 1px solid #cccccc96; margin: 20px 0;">
                     <p>
-                    I built the above narrative visualization as part of the CS 416
-                    Data Visualization course at The University of Illinois at
-                    Urbana-Champaign during my Master of Computer Science in
-                    Data Science studies.
-                    It uses the <a href="https://idl.uw.edu/papers/d3">D3.js library</a>,
-                    a commonly-used tool for creating interactive data visualizations
-                    on the web. A few examples from the New York Times:
+                    Use this visualization tool to explore American raptor migration trends based on eBird observations. I built the original visualization as my final project for the CS 416 Data Visualization course at The University of Illinois at Urbana-Champaign during my Master of Computer Science in Data Science studies. It uses the <a href="https://idl.uw.edu/papers/d3">D3.js library</a>, a commonly-used tool for creating interactive data visualizations on the web. A few examples from the New York Times:
                     <ul>
                         <li><a href="https://archive.nytimes.com/www.nytimes.com/interactive/2010/02/02/us/politics/20100201-budget-porcupine-graphic.html">Budget Forecasts, Compared With Reality (Porcupine Graphic)</a></li>
                         <li><a href="https://www.nytimes.com/interactive/2026/07/01/us/america-identity-ancestry-census.html">How a Nation of Immigrants Traces its Roots</a></li>
                     </ul>
                     <br>
                     My visualization uses eBird data (<a href="https://science.ebird.org/en/use-ebird-data/download-ebird-data-products">eBird Basic Dataset</a>) to illustrate
-                    the different migration paths that Mississippi Kites and Ospreys use
-                    and allows the users to freely explore once the guided tour is complete.
+                    the different migration paths that American birds of prey use, and allows the users to freely explore or follow a guided tour focused on the Mississippi Kite and Osprey.
                     I extracted, preprocessed, and aggregated the data using R
-                    (<a href="https://cornelllabofornithology.github.io/auk/">auk library</a>),
+                    (<a href="https://cornelllabofornithology.github.io/auk">auk library</a>),
                     similarly to how I did it for my
-                    <a href="https://infiniteiteration.com/woodpecker-population-modeling/">STAT 420 Statistical Modeling final project</a>
-                    last Fall that analyzed Pileated Woodpecker observations and habitat covariates.
+                    <a href="https://infiniteiteration.com/woodpecker-population-modeling">STAT 420 Statistical Modeling final project</a>
+                    that analyzed Pileated Woodpecker observations and habitat covariates.
                     <br>
                     <br>
-                    Visit the <a href="https://github.com/jbowen102/CS416_Narrative_Vis_project">GitHub repository</a>
+                    Visit the <a href="https://github.com/jbowen102/eBird_raptor_migration_vis">GitHub repository</a>
                     to view this project's source code.
                     <br>
                     <br>
-                    See the improved, generalized version I developed after the course ended [still under construction]:
-                    <a href="https://infiniteiteration.com/ebird-raptor-migration-vis/">eBird Raptor Migration Visualizer</a>.
+                    See the original, narrative-focused version I submitted (with a few follow-up tweaks) here:
+                    <a href="https://infiniteiteration.com/ebird-narrative-visualization-project">eBird Narrative Visualization Project</a>.
                     <br>
                     <br>
                     </p>

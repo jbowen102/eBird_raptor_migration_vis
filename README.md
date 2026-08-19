@@ -1,14 +1,14 @@
-# Narrative Visualization Project
+# eBird Raptor Migration Visualizer
 
-This repository contains data preparation and visualization code for my CS 416 narrative visualization project, including the eBird data-extraction notebooks and the webpage with D3.js code.  
-I built this as my final project for the CS 416 Data Visualization course at The University of Illinois at Urbana-Champaign during my Master of Computer Science in Data Science studies. It uses the D3.js library, a commonly-used tool for creating interactive data visualizations on the web. A few examples from the New York Times:
+This repository contains data preparation and visualization code for exploring American raptor migration trends, including the eBird data-extraction notebooks and the webpage with D3.js code.  
+I built the original visualization as my final project for the CS 416 Data Visualization course at The University of Illinois at Urbana-Champaign during my Master of Computer Science in Data Science studies. It uses the D3.js library, a commonly-used tool for creating interactive data visualizations on the web. A few examples from the New York Times:
 
 - [Budget Forecasts, Compared With Reality (Porcupine Graphic)](https://archive.nytimes.com/www.nytimes.com/interactive/2010/02/02/us/politics/20100201-budget-porcupine-graphic.html)
 - [How a Nation of Immigrants Traces its Roots](https://www.nytimes.com/interactive/2026/07/01/us/america-identity-ancestry-census.html)
 
-My visualization uses eBird data ([eBird Basic Dataset](https://science.ebird.org/en/use-ebird-data/download-ebird-data-products)) to illustrate the different migration paths that Mississippi Kites and Ospreys use and allows the users to freely explore once the guided tour is complete. I extracted, preprocessed, and aggregated the data using R ([auk library](https://cornelllabofornithology.github.io/auk/)), similarly to how I did it for my [STAT 420 Statistical Modeling final project](https://github.com/jbowen102/STAT_420_Final_Project) last Fall that analyzed Pileated Woodpecker observations and habitat covariates. 
+My visualization uses eBird data ([eBird Basic Dataset](https://science.ebird.org/en/use-ebird-data/download-ebird-data-products)) to illustrate the different migration paths that raptors use, allowing users to view a guided comparison of the Mississippi Kite and Osprey or freely explore any pair of migratory raptors. I extracted, preprocessed, and aggregated the data using R ([auk library](https://cornelllabofornithology.github.io/auk/)), similarly to how I did it for my [STAT 420 Statistical Modeling final project](https://github.com/jbowen102/STAT_420_Final_Project) that analyzed Pileated Woodpecker observations and habitat covariates. 
 
-The webpage is hosted on my personal website at [InfiniteIteration.com/ebird-narrative-visualization-project/](https://infiniteiteration.com/ebird-narrative-visualization-project/).
+The webpage is hosted on my personal website at [InfiniteIteration.com/ebird-raptor-migration-vis](https://infiniteiteration.com/ebird-raptor-migration-vis).
 
 
 ## Main Workflow
@@ -35,6 +35,6 @@ The data extraction and preparation/processing happens in `eBird_data_extract.ip
 
 
 ## Data Visualization webpage (D3.js)
-The data visualization is implemented in D3.js and is contained in the `page-full-width-nar-vis-project.php` file.  
+The data visualization is implemented in D3.js and is contained in the `page-full-width-ebird-raptor-vis.php` file.  
 The `dev_page.html` file is a development version of the visualization page to use for testing and debugging. Make changes to both files before committing. Update website with Git via remote repository.  
 Use a separate branch to develop breaking changes, then merge into main branch when ready.
