@@ -52,10 +52,10 @@ function makeHexPath(lon, lat, radiusKm) {
     return p.toString();
 }
 
-const mapLayer = svg.append("g").attr("class", "map-layer");     // zoomable layer
-const labelLayer = svg.append("g").attr("class", "label-layer"); // lat/lon labels
-const dataLayer = svg.append("g").attr("class", "data-layer");   // all species are within this layer, but each in their own nested layer defined below
+const mapLayer = svg.append("g").attr("class", "map-layer");     // zoomable base map layer
+const dataLayer = svg.append("g").attr("class", "data-layer");   // species hex layers and map annotations
 const mapAnnotationLayer = dataLayer.append("g").attr("class", "map-annotation-layer");
+const labelLayer = svg.append("g").attr("class", "label-layer"); // lat/lon labels (always above filled cells)
 
 // Border around the map viewport
 svg.append("rect")
