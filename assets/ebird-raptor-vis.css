@@ -1,0 +1,196 @@
+#viz-wrapper {
+    position: relative;
+    --button-shift-left: 40px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+}
+#map {
+    display: block;
+    width: 700px;
+    /* width: 770px; */
+    max-width: none;
+    margin-top: 34px;
+}
+.map-border {
+    fill: none;
+    stroke: #999;
+    stroke-width: 1.5px;
+    pointer-events: none;
+}
+.map-path {
+    fill: rgb(51, 51, 51);
+    fill-opacity: 0.8;
+    stroke: lightgrey;
+    vector-effect: non-scaling-stroke;
+}
+.data-hex {
+    stroke: gainsboro;
+    stroke-opacity: 0.3;
+    vector-effect: non-scaling-stroke;
+    pointer-events: all;
+}
+.graticule {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: .5px;
+}
+.graticule-label {
+    fill: white;
+    font-size: 18px;
+    pointer-events: none;
+}
+.foreground {
+    fill: none;
+    stroke: #333;
+    stroke-width: 1.5px;
+}
+.tooltip {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.4;
+    z-index: 1000;
+    white-space: nowrap;
+}
+#week-slider:disabled,
+#species-pick input:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+#viz-wrapper.controls-locked #week-slider,
+#viz-wrapper.controls-locked #species-pick input {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.control-wrap {
+    display: inline-block;
+}
+.narrative-button-fwd,
+.narrative-button-reset,
+.narrative-button-free {
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.2;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+}
+.narrative-button-fwd {
+    position: absolute;
+    top: 0;
+    left: calc(500px - var(--button-shift-left)); /* mapWidth, with shared left-shift control */
+    width: 220px; /* sidebarWidth */
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #12eb219c;
+    color: white;
+    cursor: pointer;
+}
+.narrative-button-fwd:not(:disabled):not(.is-explore):hover {
+    background: #12eb219c;
+}
+.narrative-button-fwd.is-explore {
+    background: #666;
+}
+.narrative-button-fwd:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+.narrative-button-reset {
+    position: absolute;
+    top: 40px;
+    width: 80px;
+    left: calc(500px + 220px - 80px - var(--button-shift-left)); /* mapWidth + sidebarWidth - button width, with shared shift */
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #936fff98;
+    color: white;
+    cursor: pointer;
+}
+.narrative-button-reset:not(:disabled):not(.is-disabled):hover {
+    background: #936fff98;
+}
+.narrative-button-reset.is-disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+.narrative-button-free {
+    position: absolute;
+    top: 40px;
+    left: calc(500px - var(--button-shift-left));
+    width: 130px;
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #41e3f5b9;
+    color: white;
+    cursor: pointer;
+}
+.narrative-button-free:hover {
+    background: #2c8aff;
+}
+.narrative-button-free:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+.annotation-group .connector,
+.annotation-group .note-line {
+    stroke: white;
+    stroke-width: 2;
+    fill: none;
+    vector-effect: non-scaling-stroke;
+}
+.annotation-group .annotation-note-label,
+.annotation-group .annotation-note-title {
+    fill: white;
+    font-family: sans-serif;
+}
+.annotation-group .annotation-note-label {
+    font-size: 12px;
+}
+.annotation-group .annotation-note-title {
+    font-size: 13px;
+    font-weight: bold;
+}
+.sidebar-annotation-layer .annotation-note-label {
+    font-size: 14px;
+}
+.sidebar-annotation-layer .annotation-note-title {
+    font-size: 15px;
+}
+.annotation-group .annotation-note-bg {
+    fill: rgba(0, 0, 0, 0.85);
+    stroke: none;
+    rx: 6px;
+}
+.annotation-group .connector-end {
+    stroke: white;
+    fill: none;
+}
+.annotation-group .subject {
+    fill: #ff7f0e;
+    stroke: none;
+}
+.sidebar-citation {
+    fill: #999;
+    font-family: sans-serif;
+    font-size: 12px;
+}
+#map-interaction-blocker {
+    cursor: not-allowed;
+}
+.commentary-section {
+    font-family: sans-serif;
+}
