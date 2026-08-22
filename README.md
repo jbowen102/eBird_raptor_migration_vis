@@ -14,11 +14,15 @@ I built [the original visualization](https://github.com/jbowen102/CS416_Narrativ
 
 ## eBird Data Extraction/Processing Workflow
 
-1. Extract data using `eBird_data_extract_ad_hoc.ipynb`, outputting to `output/auk` dir. Extract all species at once and split into separate files.
+Extract data using `eBird_data_extract_ad_hoc.ipynb`, outputting to `output/auk` dir.
+
+1. Extract all species at once and split into separate files by species.
 2. If needed, split each species file by date range into multiple files so sampling-data file is small enough to not fill up RAM during subsequent processing. Seems it needs to be <3GB.
-3. Transcribe final extraction and splitting code to `eBird_data_extract.ipynb` then further process data there.
-4. Zero-fill, clean, and aggregate each file (possibly multiple per species if splitting was needed) into hex cells (essentially do "group by" to assign each checklist to a hex cell and week of the year).
-5. Compute checklist count, detections, total observations, and detection frequency for each hex cell/bin
+
+Transcribe final extraction and splitting code to `eBird_data_extract.ipynb` then further process data there.
+
+4. Zero-fill and clean each file (possibly multiple per species if splitting was needed)
+5. Aggregate each file (possibly multiple per species) into hex cells (essentially do "group by" to assign each checklist to a hex cell and week of the year). Compute checklist count, detections, total observations, and detection frequency for each hex cell/bin. Write out resulting data structure to CSV.
 6. Re-combine each species' split files if needed
 7. Export cleaned and aggregated CSV files into `output` dir.
 8. Stage the output files you want to upload by creating symlinks in `source_data_upload` dir.
