@@ -253,7 +253,7 @@ const sidebarAnnotationDefs = [
         x: 20,
         y: 35,
         title: "Welcome",
-        label: "Click 'Start the Tour' to see how these two raptor species migrate each Fall.",
+        label: "Click 'Start the Tour' to see how two raptor species migrate differently each Fall.",
         wrap: 160
     },
     {
