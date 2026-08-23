@@ -96,7 +96,7 @@
     cursor: pointer;
 }
 .narrative-button-fwd:not(:disabled):not(.is-explore):hover {
-    background: #12eb219c;
+    background: #2cd61c9c;
 }
 .narrative-button-fwd.is-explore {
     background: #666;
@@ -119,7 +119,7 @@
     cursor: pointer;
 }
 .narrative-button-reset:not(:disabled):not(.is-disabled):hover {
-    background: #936fff98;
+    background: #7050ff8f;
 }
 .narrative-button-reset.is-disabled {
     background: #666;
