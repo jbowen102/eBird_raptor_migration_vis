@@ -117,8 +117,8 @@ function showTooltip(event, d) {
     const mskVisible = wrapper.select("#chk-msk").property("checked");
     const ospVisible = wrapper.select("#chk-osp").property("checked");
     const speciesLines = [
-        mskVisible ? `Mississippi Kite reported: ${d.n_detected_msk > 0 ? "Yes" : "No"}<br/>` : "",
-        ospVisible ? `Osprey reported: ${d.n_detected_osp > 0 ? "Yes" : "No"}<br/>` : ""
+        mskVisible ? `Checklists w/ Mississippi Kite: ${d.n_detected_msk || 0}<br/>` : "",
+        ospVisible ? `Checklists w/ Osprey: ${d.n_detected_osp || 0}<br/>` : ""
     ].join("");
 
     tooltip.html(` <strong>${fmt(d.cell_ctr_lat)}°, ${fmt(d.cell_ctr_lon)}°</strong><br/>
