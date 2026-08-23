@@ -60,14 +60,37 @@
     white-space: nowrap;
 }
 #week-slider:disabled,
+#year-start-slider:disabled,
+#year-end-slider:disabled,
 #species-pick input:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 #viz-wrapper.controls-locked #week-slider,
+#viz-wrapper.controls-locked #year-start-slider,
+#viz-wrapper.controls-locked #year-end-slider,
 #viz-wrapper.controls-locked #species-pick input {
     opacity: 0.4;
     cursor: not-allowed;
+}
+.year-slider-wrap {
+    display: block;
+    margin-top: 4px;
+}
+.year-slider-wrap label {
+    display: inline-block;
+    min-width: 140px;
+    font-size: 12px;
+    color: #dddddd;
+}
+#year-range-controls {
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+#year-range-status {
+    margin-top: 3px;
+    font-size: 11px;
+    color: #999;
 }
 .control-wrap {
     display: inline-block;

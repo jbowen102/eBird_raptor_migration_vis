@@ -145,6 +145,11 @@ let lon_range;
 
 let firstWeek;
 let selectedWeek;
+let minYear;
+let maxYear;
+let selectedStartYear;
+let selectedEndYear;
+let hasYearData = false;
 let weekIndexMsk;
 let weekIndexOsp;
 let layerMSK;
@@ -363,7 +368,7 @@ const sidebarAnnotationDefs = [
         x: 20,
         y: svgHeight / 8,
         title: "",
-        label: "Now use the week slider and species toggles to explore observation distributions throughout the Fall migration! Zoom in to explore areas in more detail.",
+        label: "Now use the week/year sliders and species toggles to explore observation distributions throughout the Fall migration! Zoom in to explore areas in more detail.",
         wrap: 160
     }
 ];
@@ -394,6 +399,8 @@ function parseSpeciesCsvRow(d) {
     const week = +d.week;
     const lat = +d.cell_ctr_lat;
     const lon = +d.cell_ctr_lon;
+    const parsedYear = d.year ?? d.obs_year ?? d.observation_year ?? d.yr;
+    const year = parsedYear === undefined || parsedYear === null || parsedYear === "" ? null : +parsedYear;
     if (!Number.isFinite(week) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
         return null;
     }
@@ -406,8 +413,78 @@ function parseSpeciesCsvRow(d) {
         country_code: d.country_code,
         n_checklists: +d.n_checklists || 0,
         n_detected: +d.n_detected || 0,
-        tot_observed: +d.tot_observed || 0
+        tot_observed: +d.tot_observed || 0,
+        year: Number.isFinite(year) ? year : null
     };
+}
+
+function updateYearLabels() {
+    if (hasYearData) {
+        d3.select("#year-start-label").text(selectedStartYear);
+        d3.select("#year-end-label").text(selectedEndYear);
+        d3.select("#year-range-status").text(`Years ${selectedStartYear}-${selectedEndYear}`);
+        return;
+    }
+
+    d3.select("#year-start-label").text("All years");
+    d3.select("#year-end-label").text("All years");
+    d3.select("#year-range-status").text("All years (dataset is pre-aggregated)");
+}
+
+function initializeYearControls(mskRows, ospRows) {
+    const years = mskRows.concat(ospRows)
+        .map(d => d.year)
+        .filter(year => Number.isFinite(year));
+
+    hasYearData = years.length > 0;
+
+    if (hasYearData) {
+        minYear = d3.min(years);
+        maxYear = d3.max(years);
+        selectedStartYear = minYear;
+        selectedEndYear = maxYear;
+
+        d3.select("#year-start-slider")
+          .attr("min", minYear)
+          .attr("max", maxYear)
+          .property("value", selectedStartYear)
+          .property("disabled", false)
+          .attr("disabled", null);
+        d3.select("#year-end-slider")
+          .attr("min", minYear)
+          .attr("max", maxYear)
+          .property("value", selectedEndYear)
+          .property("disabled", false)
+          .attr("disabled", null);
+    } else {
+        minYear = null;
+        maxYear = null;
+        selectedStartYear = null;
+        selectedEndYear = null;
+
+        d3.select("#year-start-slider")
+          .attr("min", 0)
+          .attr("max", 1)
+          .property("value", 0)
+          .property("disabled", true)
+          .attr("disabled", "disabled");
+        d3.select("#year-end-slider")
+          .attr("min", 0)
+          .attr("max", 1)
+          .property("value", 1)
+          .property("disabled", true)
+          .attr("disabled", "disabled");
+    }
+
+    updateYearLabels();
+}
+
+function filterRowsByYearRange(rows) {
+    if (!hasYearData) return rows;
+
+    return rows.filter(d => Number.isFinite(d.year)
+        && d.year >= selectedStartYear
+        && d.year <= selectedEndYear);
 }
 
 async function loadCsvGzip(url, rowParser) {
@@ -450,6 +527,7 @@ async function init() {
     ]);
     weekIndexMsk = buildWeekIndex(mskRows);
     weekIndexOsp = buildWeekIndex(ospRows);
+    initializeYearControls(mskRows, ospRows);
 
     firstWeek = 31;    // original range
     // firstWeek = 27; // expanded range
@@ -496,6 +574,34 @@ async function init() {
     // update when species selection changes
     d3.selectAll("#chk-msk, #chk-osp")
       .on("change", function() { updateChart(x, y); });
+
+        d3.select("#year-start-slider")
+            .on("input", function() {
+                    if (!hasYearData) return;
+
+                    selectedStartYear = +this.value;
+                    if (selectedStartYear > selectedEndYear) {
+                            selectedEndYear = selectedStartYear;
+                            d3.select("#year-end-slider").property("value", selectedEndYear);
+                    }
+
+                    updateYearLabels();
+                    updateChart(x, y);
+            });
+
+        d3.select("#year-end-slider")
+            .on("input", function() {
+                    if (!hasYearData) return;
+
+                    selectedEndYear = +this.value;
+                    if (selectedEndYear < selectedStartYear) {
+                            selectedStartYear = selectedEndYear;
+                            d3.select("#year-start-slider").property("value", selectedStartYear);
+                    }
+
+                    updateYearLabels();
+                    updateChart(x, y);
+            });
 
     // Force initial species state for consistency across browser/page restores.
     setSpeciesSelection(true, true);
@@ -969,16 +1075,24 @@ async function restoreGuidedViewForStep(step, duration = 700) {
 
 function setControlsLocked(locked) {
     const lockMsg = "Complete narrative steps to unlock this control";
+    const yearLockMsg = hasYearData
+        ? lockMsg
+        : "Year filtering requires per-year source data";
+    const yearLocked = locked || !hasYearData;
 
     d3.select("#week-slider").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
     d3.select("#chk-msk").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
     d3.select("#chk-osp").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
+    d3.select("#year-start-slider").property("disabled", yearLocked).attr("disabled", yearLocked ? "disabled" : null);
+    d3.select("#year-end-slider").property("disabled", yearLocked).attr("disabled", yearLocked ? "disabled" : null);
 
     wrapper.classed("controls-locked", locked);
 
     d3.select("#week-slider-wrap").attr("title", locked ? lockMsg : "Select observations for a given week");
     d3.select("#chk-msk-wrap").attr("title", locked ? lockMsg : "Toggle Mississippi Kite observations on/off");
     d3.select("#chk-osp-wrap").attr("title", locked ? lockMsg : "Toggle Osprey observations on/off");
+    d3.select("#year-start-slider-wrap").attr("title", yearLocked ? yearLockMsg : "Select earliest year to include");
+    d3.select("#year-end-slider-wrap").attr("title", yearLocked ? yearLockMsg : "Select latest year to include");
 }
 
 function setMapInteractionLocked(locked) {
@@ -1136,6 +1250,13 @@ function resetVisualization({ keepResetUnlocked = false } = {}) {
     selectedWeek = firstWeek;
     d3.select("#week-slider").property("value", selectedWeek);
     d3.select("#week-label").text(`Week ${selectedWeek}`);
+    if (hasYearData) {
+        selectedStartYear = minYear;
+        selectedEndYear = maxYear;
+        d3.select("#year-start-slider").property("value", selectedStartYear);
+        d3.select("#year-end-slider").property("value", selectedEndYear);
+    }
+    updateYearLabels();
     setSpeciesSelection(true, true);
 
     const x = d => projection([d.cell_ctr_lon, d.cell_ctr_lat])[0];
@@ -1167,8 +1288,10 @@ function updateChart(x, y) {
 
     const mskWeek = weekIndexMsk ? (weekIndexMsk.get(selectedWeek) || []) : [];
     const ospWeek = weekIndexOsp ? (weekIndexOsp.get(selectedWeek) || []) : [];
+    const filteredMskWeek = filterRowsByYearRange(mskWeek);
+    const filteredOspWeek = filterRowsByYearRange(ospWeek);
 
-    const mergedWeek = buildMergedWeekData(mskWeek, ospWeek, mskChecked, ospChecked);
+    const mergedWeek = buildMergedWeekData(filteredMskWeek, filteredOspWeek, mskChecked, ospChecked);
     const hexSel = dataLayer.selectAll(".data-hex")
                             .data(mergedWeek, d => d.cell);
     hexSel.exit()
