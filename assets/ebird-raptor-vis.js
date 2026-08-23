@@ -117,8 +117,8 @@ function showTooltip(event, d) {
     const mskVisible = wrapper.select("#chk-msk").property("checked");
     const ospVisible = wrapper.select("#chk-osp").property("checked");
     const speciesLines = [
-        mskVisible ? `Mississippi Kite reported: ${d.det_freq_msk > 0 ? "Yes" : "No"}<br/>` : "",
-        ospVisible ? `Osprey reported: ${d.det_freq_osp > 0 ? "Yes" : "No"}<br/>` : ""
+        mskVisible ? `Mississippi Kite reported: ${d.n_detected_msk > 0 ? "Yes" : "No"}<br/>` : "",
+        ospVisible ? `Osprey reported: ${d.n_detected_osp > 0 ? "Yes" : "No"}<br/>` : ""
     ].join("");
 
     tooltip.html(` <strong>${fmt(d.cell_ctr_lat)}°, ${fmt(d.cell_ctr_lon)}°</strong><br/>
@@ -404,17 +404,48 @@ function parseSpeciesCsvRow(d) {
         cell_ctr_lat: lat,
         cell_ctr_lon: lon,
         country_code: d.country_code,
-        det_freq: +d.det_freq || 0,
         n_checklists: +d.n_checklists || 0,
         n_detected: +d.n_detected || 0,
         tot_observed: +d.tot_observed || 0
     };
 }
 
+async function loadCsvGzip(url, rowParser) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
+    }
+
+    const contentEncoding = (response.headers.get("content-encoding") || "").toLowerCase();
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
+
+    // Case 1: Server sends Content-Encoding: gzip (browser auto-decompresses for text()).
+    if (contentEncoding.includes("gzip")) {
+        const text = await response.text();
+        return d3.csvParse(text, rowParser);
+    }
+
+    // Case 2: Raw .gz file without Content-Encoding gzip -> manually decompress in browser.
+    const looksCompressed = url.endsWith(".gz") || contentType.includes("gzip") || contentType.includes("x-gzip");
+    if (looksCompressed) {
+        if (typeof DecompressionStream === "undefined") {
+            throw new Error("This browser does not support DecompressionStream for gzip files.");
+        }
+        const ds = new DecompressionStream("gzip");
+        const decompressed = response.body.pipeThrough(ds);
+        const text = await new Response(decompressed).text();
+        return d3.csvParse(text, rowParser);
+    }
+
+    // Fallback: plain CSV response.
+    const text = await response.text();
+    return d3.csvParse(text, rowParser);
+}
+
 async function init() {
     const [mskRows, ospRows, worldData] = await Promise.all([
-        d3.csv(`${dataDir}/ar_20260821_Ictinia_mississippiensis_zf_clean_agg_weekly.csv`, parseSpeciesCsvRow),
-        d3.csv(`${dataDir}/ar_20260821_Pandion_haliaetus_zf_clean_agg_weekly.csv`, parseSpeciesCsvRow),
+        loadCsvGzip(`${dataDir}/ar_20260821_Ictinia_mississippiensis_zf_clean_agg_weekly.csv.gz`, parseSpeciesCsvRow),
+        loadCsvGzip(`${dataDir}/ar_20260821_Pandion_haliaetus_zf_clean_agg_weekly.csv.gz`, parseSpeciesCsvRow),
         d3.json(`${dataDir}/countries-50m.json`)
     ]);
     weekIndexMsk = buildWeekIndex(mskRows);
@@ -1170,8 +1201,8 @@ function updateChart(x, y) {
 }
 
 function getHexState(d) {
-    const hasMsk = d.det_freq_msk > 0;
-    const hasOsp = d.det_freq_osp > 0;
+    const hasMsk = d.n_detected_msk > 0;
+    const hasOsp = d.n_detected_osp > 0;
 
     if (hasMsk && hasOsp) return "both";
     if (hasMsk) return "msk";
@@ -1199,8 +1230,8 @@ function buildMergedWeekData(mskWeek, ospWeek, mskChecked, ospChecked) {
             cell_ctr_lat: d.cell_ctr_lat,
             cell_ctr_lon: d.cell_ctr_lon,
             country_code: d.country_code,
-            det_freq_msk: 0,
-            det_freq_osp: 0,
+            n_detected_msk: 0,
+            n_detected_osp: 0,
             n_checklists: 0,
             n_detected: 0,
             tot_observed: 0
@@ -1208,16 +1239,15 @@ function buildMergedWeekData(mskWeek, ospWeek, mskChecked, ospChecked) {
         }
         const row = byCell.get(d.cell);
         if (species === "msk") {
-            row.det_freq_msk = mskChecked ? d.det_freq : 0;
+            row.n_detected_msk = mskChecked ? (d.n_detected || 0) : 0;
             row.n_checklists = Math.max(row.n_checklists, d.n_checklists || 0);
-            row.n_detected = d.n_detected;
-            row.tot_observed = d.tot_observed;
+            row.tot_observed = (row.tot_observed || 0) + (mskChecked ? (d.tot_observed || 0) : 0);
         } else {
-            row.det_freq_osp = ospChecked ? d.det_freq : 0;
+            row.n_detected_osp = ospChecked ? (d.n_detected || 0) : 0;
             row.n_checklists = Math.max(row.n_checklists, d.n_checklists || 0);
-            row.n_detected = d.n_detected;
-            row.tot_observed = d.tot_observed;
+            row.tot_observed = (row.tot_observed || 0) + (ospChecked ? (d.tot_observed || 0) : 0);
         }
+        row.n_detected = (row.n_detected_msk || 0) + (row.n_detected_osp || 0);
         }
     }
 
