@@ -23,10 +23,10 @@ const vertMapOffset = 5;       // shift map downward in SVG window
 // const latMapOffset = 31.5;  // shift map leftward in SVG window
 // const vertMapOffset = 3;    // shift map downward in SVG window
 
-const panOverscrollWest = 185;
-const panOverscrollEast = 0;
-const panOverscrollNorth = 250;
-const panOverscrollSouth = 0;
+const panOverscrollWest = 320;
+const panOverscrollEast = 105;
+const panOverscrollNorth = 387;
+const panOverscrollSouth = 150;
 
 const hexSpacingKm = 50;  // used with dggridr::dgconstruct()
 const hexRadiusKm = hexSpacingKm / 2;
@@ -101,8 +101,8 @@ citationGroup.selectAll("text")
              .attr("y", (d, i) => i * 12)
              .text(d => d);
 
-const latLabelShift = 70;  // shift latitude-line labels rightward (pixels)
-const lonLabelShift = 25;  // shift longitude-line labels upward (pixels)
+const latLabelShift = 275;  // shift latitude-line labels rightward (pixels)
+const lonLabelShift = 73;  // shift longitude-line labels upward (pixels)
 
 const wrapper = d3.select("#viz-wrapper");
 const tooltip = wrapper.select("#tooltip");
@@ -435,6 +435,8 @@ async function init() {
     const centerLat = vertMapOffset + (lat_range[0]-1 + lat_range[1]) / 2;
     // expanded longitude range by 1 degree West to un-crowd axis
     // expanded latitude range by 1 degree South to un-crowd axis
+    lat_range_graticule = [-20, 60];           // extending beyond narrative-vis window for overscroll and zoom out
+    lon_range_graticule = [-130, -50];         // extending beyond narrative-vis window for overscroll and zoom out
 
     projection = d3.geoMercator()
                    .center([centerLon, centerLat])
@@ -857,7 +859,7 @@ async function init() {
                          if (isMapInteractionLocked) return false;
                          return (!event.ctrlKey || event.type === "wheel") && !event.button;
                      })
-                     .scaleExtent([1, 4]) // min/max zoom
+                     .scaleExtent([0.537, 4]) // min/max zoom
                      .extent([[0, 0], [mapWidth, mapHeight]]) // define the area in which zooming is allowed
                      .translateExtent([[-panOverscrollWest, -panOverscrollNorth], [mapWidth + panOverscrollEast, mapHeight + panOverscrollSouth]]) // allow directional overscroll beyond default viewport
                      .on("zoom", (event) => {
@@ -871,7 +873,7 @@ async function init() {
 
     drawMap(worldData);
 
-    makeLabels(lat_range, lon_range);
+    makeLabels(lat_range_graticule, lon_range_graticule);
     updateLabelTransform();
 
 }
