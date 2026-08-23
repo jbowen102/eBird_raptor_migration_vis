@@ -413,8 +413,8 @@ function parseSpeciesCsvRow(d) {
 
 async function init() {
     const [mskRows, ospRows, worldData] = await Promise.all([
-        d3.csv(`${dataDir}/mississippi_kite_compl_exp1-2comb_20260803_zf_clean_agg_weekly.csv`, parseSpeciesCsvRow),
-        d3.csv(`${dataDir}/osprey_compl_exp1-2comb_20260803_zf_clean_agg_weekly.csv`, parseSpeciesCsvRow),
+        d3.csv(`${dataDir}/ar_20260821_Ictinia_mississippiensis_zf_clean_agg_weekly.csv`, parseSpeciesCsvRow),
+        d3.csv(`${dataDir}/ar_20260821_Pandion_haliaetus_zf_clean_agg_weekly.csv`, parseSpeciesCsvRow),
         d3.json(`${dataDir}/countries-50m.json`)
     ]);
     weekIndexMsk = buildWeekIndex(mskRows);

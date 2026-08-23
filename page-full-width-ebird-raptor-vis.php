@@ -61,7 +61,7 @@ get_header(); ?>
                     <svg id="map"></svg>
                     <script>
                         window.EBIRD_VIS_CONFIG = {
-                            dataDir: "/data/CS416_NVis_project",
+                            dataDir: "/data/eBird_raptor_migration_vis",
                             // pass parameters here to the visualization script if needed
                         };
                     </script>
