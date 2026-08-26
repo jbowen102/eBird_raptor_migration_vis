@@ -60,17 +60,44 @@
     white-space: nowrap;
 }
 #week-slider:disabled,
-#species-pick input:disabled {
+#species-pick input:disabled,
+#species-pick select:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 #viz-wrapper.controls-locked #week-slider,
-#viz-wrapper.controls-locked #species-pick input {
+#viz-wrapper.controls-locked #species-pick input,
+#viz-wrapper.controls-locked #species-pick select {
     opacity: 0.4;
     cursor: not-allowed;
 }
 .control-wrap {
     display: inline-block;
+}
+#species-pick {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+#species-pick .control-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.species-select {
+    min-width: 220px;
+    max-width: 240px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #888;
+    background: #111;
+    color: #f3f3f3;
+    font-size: 13px;
+}
+.species-select:focus {
+    outline: 1px solid #41e2f5;
 }
 .narrative-button-fwd,
 .narrative-button-reset,

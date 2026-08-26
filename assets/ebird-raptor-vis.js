@@ -107,18 +107,64 @@ const lonLabelShift = 73;  // shift longitude-line labels upward (pixels)
 const wrapper = d3.select("#viz-wrapper");
 const tooltip = wrapper.select("#tooltip");
 
+const SLOT_A_COLOR = "#12eb1f";
+const SLOT_B_COLOR = "#926fff";
+const BOTH_COLOR = "#41e2f5";
+
+const speciesCatalog = [
+    { id: "msk", label: "Mississippi Kite", file: "ar_20260821_Ictinia_mississippiensis_zf_clean_agg_weekly.csv.gz" },
+    { id: "osp", label: "Osprey", file: "ar_20260821_Pandion_haliaetus_zf_clean_agg_weekly.csv.gz" },
+    { id: "swa", label: "Swainson's Hawk", file: "ar_20260821_Buteo_swainsoni_zf_clean_agg_weekly.csv.gz" },
+    { id: "bwh", label: "Broad-winged Hawk", file: "ar_20260821_Buteo_platypterus_zf_clean_agg_weekly.csv.gz" },
+    { id: "nth", label: "Northern Harrier", file: "ar_20260821_Circus_hudsonius_zf_clean_agg_weekly.csv.gz" },
+    { id: "ssk", label: "Sharp-shinned Hawk", file: "ar_20260821_Accipiter_striatus_zf_clean_agg_weekly.csv.gz" },
+    { id: "coh", label: "Cooper's Hawk", file: "ar_20260821_Astur_cooperii_zf_clean_agg_weekly.csv.gz" },
+    { id: "rsh", label: "Red-shouldered Hawk", file: "ar_20260821_Buteo_lineatus_zf_clean_agg_weekly.csv.gz" },
+    { id: "rth", label: "Red-tailed Hawk", file: "ar_20260821_Buteo_jamaicensis_zf_clean_agg_weekly.csv.gz" },
+    { id: "merk", label: "Merlin", file: "ar_20260821_Falco_columbarius_zf_clean_agg_weekly.csv.gz" },
+    { id: "amke", label: "American Kestrel", file: "ar_20260821_Falco_sparverius_zf_clean_agg_weekly.csv.gz" },
+    { id: "pere", label: "Peregrine Falcon", file: "ar_20260821_Falco_peregrinus_zf_clean_agg_weekly.csv.gz" },
+    { id: "baea", label: "Bald Eagle", file: "ar_20260821_Haliaeetus_leucocephalus_zf_clean_agg_weekly.csv.gz" },
+    { id: "gole", label: "Golden Eagle", file: "ar_20260821_Aquila_chrysaetos_zf_clean_agg_weekly.csv.gz" },
+    { id: "stki", label: "Swallow-tailed Kite", file: "ar_20260821_Elanoides_forficatus_zf_clean_agg_weekly.csv.gz" }
+];
+
+const speciesById = new Map(speciesCatalog.map(species => [species.id, species]));
+const speciesDataCache = new Map();
+const speciesLoadPromises = new Map();
+
+const defaultSlotAId = "msk";
+const defaultSlotBId = "osp";
+
+let selectedSlotAId = defaultSlotAId;
+let selectedSlotBId = defaultSlotBId;
+
 function setSpeciesSelection(mskChecked, ospChecked) {
     wrapper.select("#chk-msk").property("checked", mskChecked);
     wrapper.select("#chk-osp").property("checked", ospChecked);
+}
+
+function getSelectedSpeciesLabel(slotKey) {
+    const selectedId = slotKey === "slotA" ? selectedSlotAId : selectedSlotBId;
+    return speciesById.get(selectedId)?.label || "Unknown species";
+}
+
+function updateSpeciesSlotLabels() {
+    d3.select("#lbl-msk").text(getSelectedSpeciesLabel("slotA"));
+    d3.select("#lbl-osp").text(getSelectedSpeciesLabel("slotB"));
 }
 
 function showTooltip(event, d) {
     const fmt = d3.format(".3f");
     const mskVisible = wrapper.select("#chk-msk").property("checked");
     const ospVisible = wrapper.select("#chk-osp").property("checked");
+
+    const slotALabel = getSelectedSpeciesLabel("slotA");
+    const slotBLabel = getSelectedSpeciesLabel("slotB");
+
     const speciesLines = [
-        mskVisible ? `Checklists w/ Mississippi Kite: ${d.n_detected_msk || 0}<br/>` : "",
-        ospVisible ? `Checklists w/ Osprey: ${d.n_detected_osp || 0}<br/>` : ""
+        mskVisible ? `Checklists w/ ${slotALabel}: ${d.n_detected_slot_a || 0}<br/>` : "",
+        ospVisible ? `Checklists w/ ${slotBLabel}: ${d.n_detected_slot_b || 0}<br/>` : ""
     ].join("");
 
     tooltip.html(` <strong>${fmt(d.cell_ctr_lat)}°, ${fmt(d.cell_ctr_lon)}°</strong><br/>
@@ -442,6 +488,119 @@ async function loadCsvGzip(url, rowParser) {
     return d3.csvParse(text, rowParser);
 }
 
+async function ensureSpeciesLoaded(speciesId) {
+    if (speciesDataCache.has(speciesId)) {
+        return speciesDataCache.get(speciesId);
+    }
+
+    if (speciesLoadPromises.has(speciesId)) {
+        return speciesLoadPromises.get(speciesId);
+    }
+
+    const species = speciesById.get(speciesId);
+    if (!species) {
+        throw new Error(`Unknown species id: ${speciesId}`);
+    }
+
+    const loadPromise = loadCsvGzip(`${dataDir}/${species.file}`, parseSpeciesCsvRow)
+        .then(rows => ({
+            rows,
+            weekIndex: buildWeekIndex(rows)
+        }))
+        .then(speciesData => {
+            speciesDataCache.set(speciesId, speciesData);
+            speciesLoadPromises.delete(speciesId);
+            return speciesData;
+        })
+        .catch(error => {
+            speciesLoadPromises.delete(speciesId);
+            throw error;
+        });
+
+    speciesLoadPromises.set(speciesId, loadPromise);
+    return loadPromise;
+}
+
+async function ensureSpeciesPairLoaded(slotAId, slotBId) {
+    await Promise.all([
+        ensureSpeciesLoaded(slotAId),
+        ensureSpeciesLoaded(slotBId)
+    ]);
+}
+
+function getWeekRowsForSpecies(speciesId) {
+    const speciesData = speciesDataCache.get(speciesId);
+    if (!speciesData || !speciesData.weekIndex) {
+        return [];
+    }
+    return speciesData.weekIndex.get(selectedWeek) || [];
+}
+
+function getSpeciesDataForSlot(slotKey) {
+    const speciesId = slotKey === "slotA" ? selectedSlotAId : selectedSlotBId;
+    const weekRows = getWeekRowsForSpecies(speciesId);
+    const species = speciesById.get(speciesId);
+    return {
+        speciesId,
+        speciesLabel: species?.label || speciesId,
+        weekRows
+    };
+}
+
+function populateSpeciesSelects() {
+    const slotASelect = d3.select("#sel-msk");
+    const slotBSelect = d3.select("#sel-osp");
+
+    slotASelect.selectAll("option")
+        .data(speciesCatalog, d => d.id)
+        .join("option")
+        .attr("value", d => d.id)
+        .text(d => d.label);
+
+    slotBSelect.selectAll("option")
+        .data(speciesCatalog, d => d.id)
+        .join("option")
+        .attr("value", d => d.id)
+        .text(d => d.label);
+
+    slotASelect.property("value", selectedSlotAId);
+    slotBSelect.property("value", selectedSlotBId);
+    updateSpeciesSlotLabels();
+}
+
+function resetSpeciesSelectsToDefaults() {
+    selectedSlotAId = defaultSlotAId;
+    selectedSlotBId = defaultSlotBId;
+    d3.select("#sel-msk").property("value", selectedSlotAId);
+    d3.select("#sel-osp").property("value", selectedSlotBId);
+    updateSpeciesSlotLabels();
+}
+
+async function onSpeciesDropdownChange(slotKey, x, y) {
+    const isFreeExplore = currentStep === 11;
+    if (!isFreeExplore) {
+        return;
+    }
+
+    const selectId = slotKey === "slotA" ? "#sel-msk" : "#sel-osp";
+    const selectedId = d3.select(selectId).property("value");
+
+    if (slotKey === "slotA") {
+        selectedSlotAId = selectedId;
+    } else {
+        selectedSlotBId = selectedId;
+    }
+
+    updateSpeciesSlotLabels();
+
+    try {
+        await ensureSpeciesPairLoaded(selectedSlotAId, selectedSlotBId);
+        updateChart(x, y);
+    } catch (error) {
+        console.error("Failed to load selected species:", error);
+    }
+}
+
 async function init() {
     const [mskRows, ospRows, worldData] = await Promise.all([
         loadCsvGzip(`${dataDir}/ar_20260821_Ictinia_mississippiensis_zf_clean_agg_weekly.csv.gz`, parseSpeciesCsvRow),
@@ -450,6 +609,15 @@ async function init() {
     ]);
     weekIndexMsk = buildWeekIndex(mskRows);
     weekIndexOsp = buildWeekIndex(ospRows);
+
+    speciesDataCache.set("msk", {
+        rows: mskRows,
+        weekIndex: weekIndexMsk
+    });
+    speciesDataCache.set("osp", {
+        rows: ospRows,
+        weekIndex: weekIndexOsp
+    });
 
     firstWeek = 31;    // original range
     // firstWeek = 27; // expanded range
@@ -484,6 +652,8 @@ async function init() {
     layerMSK = dataLayer.append("g").attr("class", "layer-msk");
     layerOSP = dataLayer.append("g").attr("class", "layer-osp");
 
+    populateSpeciesSelects();
+
     // update when date selection changes
     d3.select("#week-slider")
       .on("input", function() { selectedWeek = +this.value;
@@ -496,6 +666,16 @@ async function init() {
     // update when species selection changes
     d3.selectAll("#chk-msk, #chk-osp")
       .on("change", function() { updateChart(x, y); });
+
+        d3.select("#sel-msk")
+            .on("change", async function() {
+                    await onSpeciesDropdownChange("slotA", x, y);
+            });
+
+        d3.select("#sel-osp")
+            .on("change", async function() {
+                    await onSpeciesDropdownChange("slotB", x, y);
+            });
 
     // Force initial species state for consistency across browser/page restores.
     setSpeciesSelection(true, true);
@@ -973,12 +1153,17 @@ function setControlsLocked(locked) {
     d3.select("#week-slider").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
     d3.select("#chk-msk").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
     d3.select("#chk-osp").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
+    d3.select("#sel-msk").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
+    d3.select("#sel-osp").property("disabled", locked).attr("disabled", locked ? "disabled" : null);
 
     wrapper.classed("controls-locked", locked);
 
+    const slotALabel = getSelectedSpeciesLabel("slotA");
+    const slotBLabel = getSelectedSpeciesLabel("slotB");
+
     d3.select("#week-slider-wrap").attr("title", locked ? lockMsg : "Select observations for a given week");
-    d3.select("#chk-msk-wrap").attr("title", locked ? lockMsg : "Toggle Mississippi Kite observations on/off");
-    d3.select("#chk-osp-wrap").attr("title", locked ? lockMsg : "Toggle Osprey observations on/off");
+    d3.select("#chk-msk-wrap").attr("title", locked ? lockMsg : `Toggle ${slotALabel} observations on/off`);
+    d3.select("#chk-osp-wrap").attr("title", locked ? lockMsg : `Toggle ${slotBLabel} observations on/off`);
 }
 
 function setMapInteractionLocked(locked) {
@@ -1137,6 +1322,7 @@ function resetVisualization({ keepResetUnlocked = false } = {}) {
     d3.select("#week-slider").property("value", selectedWeek);
     d3.select("#week-label").text(`Week ${selectedWeek}`);
     setSpeciesSelection(true, true);
+    resetSpeciesSelectsToDefaults();
 
     const x = d => projection([d.cell_ctr_lon, d.cell_ctr_lat])[0];
     const y = d => projection([d.cell_ctr_lon, d.cell_ctr_lat])[1];
@@ -1165,10 +1351,10 @@ function updateChart(x, y) {
     const mskChecked = wrapper.select("#chk-msk").property("checked");
     const ospChecked = wrapper.select("#chk-osp").property("checked");
 
-    const mskWeek = weekIndexMsk ? (weekIndexMsk.get(selectedWeek) || []) : [];
-    const ospWeek = weekIndexOsp ? (weekIndexOsp.get(selectedWeek) || []) : [];
+    const slotA = getSpeciesDataForSlot("slotA");
+    const slotB = getSpeciesDataForSlot("slotB");
 
-    const mergedWeek = buildMergedWeekData(mskWeek, ospWeek, mskChecked, ospChecked);
+    const mergedWeek = buildMergedWeekData(slotA, slotB, mskChecked, ospChecked);
     const hexSel = dataLayer.selectAll(".data-hex")
                             .data(mergedWeek, d => d.cell);
     hexSel.exit()
@@ -1201,28 +1387,30 @@ function updateChart(x, y) {
 }
 
 function getHexState(d) {
-    const hasMsk = d.n_detected_msk > 0;
-    const hasOsp = d.n_detected_osp > 0;
+    const hasSlotA = d.n_detected_slot_a > 0;
+    const hasSlotB = d.n_detected_slot_b > 0;
 
-    if (hasMsk && hasOsp) return "both";
-    if (hasMsk) return "msk";
-    if (hasOsp) return "osp";
+    if (hasSlotA && hasSlotB) return "both";
+    if (hasSlotA) return "slotA";
+    if (hasSlotB) return "slotB";
     return "none";
 }
 
 function getHexColor(state) {
     switch (state) {
-        case "msk": return "#12eb1f";   // bright green
-        case "osp": return "#926fff";   // purple
-        case "both": return "#41e2f5";  // blue - middle
+        case "slotA": return SLOT_A_COLOR;
+        case "slotB": return SLOT_B_COLOR;
+        case "both": return BOTH_COLOR;
         default: return "none";
     }
 }
 
-function buildMergedWeekData(mskWeek, ospWeek, mskChecked, ospChecked) {
+function buildMergedWeekData(slotA, slotB, slotAChecked, slotBChecked) {
     const byCell = new Map();
 
-    function addRows(rows, species) {
+    const sameSpeciesBothSlots = slotA.speciesId === slotB.speciesId;
+
+    function addRows(rows, slotKey, checked, duplicateFromSameSpecies) {
         for (const d of rows) {
         if (!byCell.has(d.cell)) {
             byCell.set(d.cell, {
@@ -1230,29 +1418,33 @@ function buildMergedWeekData(mskWeek, ospWeek, mskChecked, ospChecked) {
             cell_ctr_lat: d.cell_ctr_lat,
             cell_ctr_lon: d.cell_ctr_lon,
             country_code: d.country_code,
-            n_detected_msk: 0,
-            n_detected_osp: 0,
+            n_detected_slot_a: 0,
+            n_detected_slot_b: 0,
             n_checklists: 0,
             n_detected: 0,
             tot_observed: 0
             });
         }
         const row = byCell.get(d.cell);
-        if (species === "msk") {
-            row.n_detected_msk = mskChecked ? (d.n_detected || 0) : 0;
-            row.n_checklists = Math.max(row.n_checklists, d.n_checklists || 0);
-            row.tot_observed = (row.tot_observed || 0) + (mskChecked ? (d.tot_observed || 0) : 0);
+
+        const detectedValue = checked ? (d.n_detected || 0) : 0;
+        if (slotKey === "slotA") {
+            row.n_detected_slot_a = detectedValue;
         } else {
-            row.n_detected_osp = ospChecked ? (d.n_detected || 0) : 0;
-            row.n_checklists = Math.max(row.n_checklists, d.n_checklists || 0);
-            row.tot_observed = (row.tot_observed || 0) + (ospChecked ? (d.tot_observed || 0) : 0);
+            row.n_detected_slot_b = detectedValue;
         }
-        row.n_detected = (row.n_detected_msk || 0) + (row.n_detected_osp || 0);
+
+        row.n_checklists = Math.max(row.n_checklists, d.n_checklists || 0);
+        if (checked && !duplicateFromSameSpecies) {
+            row.tot_observed = (row.tot_observed || 0) + (d.tot_observed || 0);
+        }
+
+        row.n_detected = Math.max(row.n_detected_slot_a || 0, row.n_detected_slot_b || 0);
         }
     }
 
-    addRows(mskWeek, "msk");
-    addRows(ospWeek, "osp");
+    addRows(slotA.weekRows, "slotA", slotAChecked, false);
+    addRows(slotB.weekRows, "slotB", slotBChecked, sameSpeciesBothSlots);
 
     return Array.from(byCell.values());
 }

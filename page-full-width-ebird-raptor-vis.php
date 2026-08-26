@@ -49,10 +49,12 @@ get_header(); ?>
 
                     <div id="species-pick">
                         <span class="control-wrap" id="chk-msk-wrap" style="display: inline-block;">
-                            <label style="margin-right:12px; color:#12eb1f;"><input type="checkbox" id="chk-msk" checked> Mississippi Kite</label>
+                            <label style="margin-right:12px; color:#12eb1f;"><input type="checkbox" id="chk-msk" checked> <span id="lbl-msk">Mississippi Kite</span></label>
+                            <select id="sel-msk" class="species-select" disabled aria-label="Species slot A"></select>
                         </span>
                         <span class="control-wrap" id="chk-osp-wrap" style="display: inline-block;">
-                            <label style="color:#926fff;"><input type="checkbox" id="chk-osp" checked> Osprey</label>
+                            <label style="color:#926fff;"><input type="checkbox" id="chk-osp" checked> <span id="lbl-osp">Osprey</span></label>
+                            <select id="sel-osp" class="species-select" disabled aria-label="Species slot B"></select>
                         </span>
                     </div>
                     </br>
